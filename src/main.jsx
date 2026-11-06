@@ -29,8 +29,10 @@ import BookCreate from "./assets/pages/admin/books/create";
 import AdminTransactions from "./assets/pages/admin/transactions/index";
 import AdminGenres from "./assets/pages/admin/genres/index";
 import GenreCreate from "./assets/pages/admin/genres/create";
+import GenreEdit from "./assets/pages/admin/genres/edit";
 import AdminAuthors from "./assets/pages/admin/authors/index";
 import AuthorCreate from "./assets/pages/admin/authors/create";
+import AuthorEdit from "./assets/pages/admin/authors/edit";
 
 /**
  * Flowbite mengaktifkan dropdown / drawer / collapse dengan membaca atribut data-*
@@ -71,8 +73,10 @@ const router = createBrowserRouter([
           { path: "transactions", element: <AdminTransactions /> },
           { path: "genres", element: <AdminGenres /> },
           { path: "genres/create", element: <GenreCreate /> },
+          { path: "genres/:id/edit", element: <GenreEdit /> },
           { path: "authors", element: <AdminAuthors /> },
           { path: "authors/create", element: <AuthorCreate /> },
+          { path: "authors/:id/edit", element: <AuthorEdit /> },
         ],
       },
     ],

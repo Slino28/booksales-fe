@@ -3,16 +3,41 @@ import { Link } from "react-router-dom";
 import { request } from "../../../../api";
 
 export default function AdminAuthors() {
-  const [authors, setAuthors] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // pesan error untuk aksi hapus (terpisah dari error saat memuat data)
+  const [actionError, setActionError] = useState("");
+  const [needLogin, setNeedLogin] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+
   useEffect(() => {
     request("/authors")
-      .then((res) => setAuthors(res.data))
+      .then((res) => setItems(res.data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleDelete = async (item) => {
+    // minta konfirmasi dulu supaya tidak terhapus karena salah klik
+    if (!window.confirm(`Hapus author "${item.name}"?`)) return;
+
+    setDeletingId(item.id);
+    setActionError("");
+    setNeedLogin(false);
+
+    try {
+      await request(`/authors/${item.id}`, { method: "DELETE" });
+      // buang baris yang dihapus dari tabel tanpa memuat ulang halaman
+      setItems((list) => list.filter((row) => row.id !== item.id));
+    } catch (err) {
+      setActionError(err.message);
+      setNeedLogin(err.status === 401 || err.status === 403);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <section className="bg-gray-50 dark:bg-gray-900 p-3 sm:p-5">
@@ -23,7 +48,7 @@ export default function AdminAuthors() {
               Daftar Author
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {authors.length} author tersimpan
+              {items.length} author tersimpan
             </p>
           </div>
           <Link
@@ -46,13 +71,24 @@ export default function AdminAuthors() {
           </p>
         )}
 
+        {actionError && (
+          <p className="mx-4 mb-4 p-3 text-sm text-red-800 bg-red-50 rounded-lg dark:bg-gray-700 dark:text-red-400">
+            {actionError}{" "}
+            {needLogin && (
+              <Link to="/login" className="font-medium underline">
+                Masuk sebagai admin
+              </Link>
+            )}
+          </p>
+        )}
+
         {!loading && !error && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
                   <th scope="col" className="px-4 py-3">
-                    Author
+                    Nama author
                   </th>
                   <th scope="col" className="px-4 py-3">
                     File foto
@@ -60,30 +96,45 @@ export default function AdminAuthors() {
                   <th scope="col" className="px-4 py-3">
                     Biografi
                   </th>
+                  <th scope="col" className="px-4 py-3 text-right">
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {authors.map((author) => (
-                  <tr key={author.id} className="border-b dark:border-gray-700">
+                {items.map((item) => (
+                  <tr key={item.id} className="border-b dark:border-gray-700">
                     <th
                       scope="row"
                       className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white"
                     >
-                      <div className="flex items-center gap-3">
-                        {/* lingkaran berisi huruf pertama nama sebagai pengganti foto */}
-                        <span className="flex items-center justify-center w-8 h-8 text-xs font-bold text-white bg-indigo-600 rounded-full">
-                          {author.name.charAt(0).toUpperCase()}
-                        </span>
-                        {author.name}
-                      </div>
+                      {item.name}
                     </th>
-                    <td className="px-4 py-3">{author.photo ?? "-"}</td>
-                    <td className="px-4 py-3">{author.bio ?? "-"}</td>
+                    <td className="px-4 py-3">{item.photo ?? "-"}</td>
+                    <td className="px-4 py-3">{item.bio ?? "-"}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-3">
+                        <Link
+                          to={`/admin/authors/${item.id}/edit`}
+                          className="font-medium text-indigo-600 hover:underline dark:text-indigo-500"
+                        >
+                          Ubah
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item)}
+                          disabled={deletingId === item.id}
+                          className="font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-500"
+                        >
+                          {deletingId === item.id ? "Menghapus..." : "Hapus"}
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
-                {authors.length === 0 && (
+                {items.length === 0 && (
                   <tr>
-                    <td colSpan="3" className="px-4 py-6 text-center">
+                    <td colSpan="4" className="px-4 py-6 text-center">
                       Belum ada author.
                     </td>
                   </tr>
