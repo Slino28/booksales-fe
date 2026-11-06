@@ -1,107 +1,247 @@
+import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { request } from "../../../api";
+import AuthShowcase from "../../components/auth/AuthShowcase";
+import TextField from "../../components/form/TextField";
+import PasswordField from "../../components/form/PasswordField";
+import { validateRegister } from "../../utils/validators";
+
+const emptyForm = {
+  fullName: "",
+  email: "",
+  username: "",
+  password: "",
+  confirmPassword: "",
+};
+
+// Daftar kolom. Menambah kolom baru cukup menambah satu baris di sini.
+const fields = [
+  {
+    name: "fullName",
+    label: "Nama lengkap",
+    placeholder: "Nama sesuai identitas",
+    autoComplete: "name",
+  },
+  {
+    name: "email",
+    label: "Email",
+    type: "email",
+    placeholder: "nama@email.com",
+    autoComplete: "email",
+  },
+  {
+    name: "username",
+    label: "Username",
+    placeholder: "Huruf, angka, atau garis bawah",
+    autoComplete: "username",
+  },
+  {
+    name: "password",
+    label: "Password",
+    isPassword: true,
+    showStrength: true,
+    placeholder: "Minimal 8 karakter",
+    autoComplete: "new-password",
+  },
+  {
+    name: "confirmPassword",
+    label: "Konfirmasi password",
+    isPassword: true,
+    placeholder: "Ketik ulang password",
+    autoComplete: "new-password",
+  },
+];
+
 export default function Register() {
+  const navigate = useNavigate();
+
+  const [values, setValues] = useState(emptyForm);
+  const [touched, setTouched] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [serverErrors, setServerErrors] = useState({});
+  const [formError, setFormError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  // hasil validasi dihitung ulang otomatis setiap isi form berubah
+  const errors = useMemo(() => validateRegister(values), [values]);
+
+  // error baru ditampilkan setelah kolomnya disentuh, atau setelah tombol ditekan
+  const errorOf = (field) => {
+    if (serverErrors[field]) return serverErrors[field];
+    return touched[field] || submitted ? errors[field] : "";
+  };
+
+  const isValid = (field) =>
+    Boolean(touched[field]) &&
+    values[field] !== "" &&
+    !errors[field] &&
+    !serverErrors[field];
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setValues({ ...values, [name]: value });
+    // pesan dari server dihapus begitu pengguna memperbaiki kolom itu
+    if (serverErrors[name]) setServerErrors({ ...serverErrors, [name]: "" });
+  };
+
+  const handleBlur = (e) => {
+    setTouched({ ...touched, [e.target.name]: true });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+    setFormError("");
+
+    if (Object.keys(errors).length > 0) return;
+
+    setLoading(true);
+    try {
+      // backend Laravel menerima name, email, password
+      await request("/register", {
+        method: "POST",
+        body: {
+          name: values.fullName.trim(),
+          email: values.email.trim(),
+          password: values.password,
+        },
+      });
+
+      setSuccess(true);
+      setTimeout(() => navigate("/login"), 1800);
+    } catch (err) {
+      // petakan nama field milik server ke nama field di form ini
+      const fromServer = err.errors ?? {};
+      setServerErrors({
+        fullName: fromServer.name?.[0] ?? "",
+        email: fromServer.email?.[0] ?? "",
+        password: fromServer.password?.[0] ?? "",
+      });
+      setFormError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <>
-      <section className="bg-gray-50 dark:bg-gray-900">
-        <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-          <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-            <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-              <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-                Create an account
+    <div className="grid min-h-screen font-isi lg:grid-cols-[5fr_6fr]">
+      <AuthShowcase />
+
+      <main className="flex items-center bg-white px-6 py-10 dark:bg-malam sm:px-12">
+        <div className="mx-auto w-full max-w-[26rem]">
+          <Link
+            to="/"
+            className="mb-8 block font-judul text-xl font-bold text-tinta dark:text-white lg:hidden"
+          >
+            BookSales
+          </Link>
+
+          {success ? (
+            <div role="status">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-kobalt text-white motion-safe:animate-pop">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-7 w-7"
+                >
+                  <path d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              </span>
+              <h1 className="mt-6 font-judul text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Akun dibuat
               </h1>
-              <form className="space-y-4 md:space-y-6" action="#">
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Your email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    id="email"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-600 focus:border-indigo-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    placeholder="name@company.com"
-                    required=""
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Your name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    id="name"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-600 focus:border-indigo-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    placeholder="name@company.com"
-                    required=""
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    id="password"
-                    placeholder="••••••••"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-600 focus:border-indigo-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    required=""
-                  />
-                </div>
-                <div className="flex items-start">
-                  <div className="flex items-center h-5">
-                    <input
-                      id="terms"
-                      aria-describedby="terms"
-                      type="checkbox"
-                      className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-indigo-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-indigo-600 dark:ring-offset-gray-800"
-                      required=""
+              <p className="mt-2 text-[15px] text-slate-600 dark:text-slate-400">
+                Mengalihkan ke halaman masuk...
+              </p>
+              <Link
+                to="/login"
+                className="mt-6 inline-flex h-11 items-center rounded-lg border border-slate-300 px-5 text-sm font-semibold text-slate-800 hover:bg-slate-50 dark:border-[#25324F] dark:text-white dark:hover:bg-[#121B33]"
+              >
+                Masuk sekarang
+              </Link>
+            </div>
+          ) : (
+            <>
+              <h1 className="font-judul text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Buat akun
+              </h1>
+              <p className="mt-2 text-[15px] text-slate-600 dark:text-slate-400">
+                Sudah punya akun?{" "}
+                <Link
+                  to="/login"
+                  className="font-semibold text-kobalt hover:underline dark:text-[#7C93FF]"
+                >
+                  Masuk
+                </Link>
+              </p>
+
+              {formError && (
+                <p
+                  role="alert"
+                  className="mt-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                >
+                  {formError}
+                </p>
+              )}
+
+              <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
+                {fields.map(({ isPassword, ...field }) => {
+                  const Field = isPassword ? PasswordField : TextField;
+
+                  return (
+                    <Field
+                      key={field.name}
+                      {...field}
+                      value={values[field.name]}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      error={errorOf(field.name)}
+                      valid={isValid(field.name)}
                     />
-                  </div>
-                  <div className="ml-3 text-sm">
-                    <label
-                      htmlFor="terms"
-                      className="font-light text-gray-500 dark:text-gray-300"
-                    >
-                      I accept the{" "}
-                      <a
-                        className="font-medium text-indigo-600 hover:underline dark:text-indigo-500"
-                        href="#"
-                      >
-                        Terms and Conditions
-                      </a>
-                    </label>
-                  </div>
-                </div>
+                  );
+                })}
+
                 <button
                   type="submit"
-                  className="w-full text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-indigo-800"
+                  disabled={loading}
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-kobalt text-[15px] font-semibold text-white transition-colors hover:bg-kobalt-gelap focus:outline-none focus-visible:ring-4 focus-visible:ring-kobalt/30 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Create an account
+                  {loading && (
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="h-4 w-4 animate-spin"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeOpacity="0.25"
+                        strokeWidth="4"
+                      />
+                      <path
+                        d="M22 12a10 10 0 00-10-10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  )}
+                  {loading ? "Membuat akun..." : "Buat akun"}
                 </button>
-                <p className="text-sm font-light text-gray-500 dark:text-gray-400">
-                  Already have an account?{" "}
-                  <a
-                    href="login"
-                    className="font-medium text-indigo-600 hover:underline dark:text-indigo-500"
-                  >
-                    Login here
-                  </a>
-                </p>
               </form>
-            </div>
-          </div>
+            </>
+          )}
         </div>
-      </section>
-    </>
+      </main>
+    </div>
   );
 }
