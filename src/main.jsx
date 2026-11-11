@@ -9,6 +9,11 @@ import {
 import { initFlowbite } from "flowbite";
 import "./index.css";
 
+// autentikasi & hak akses
+import { AuthProvider } from "./assets/context/AuthContext";
+import RequireRole from "./assets/components/auth/RequireRole";
+import GuestOnly from "./assets/components/auth/GuestOnly";
+
 // layouts
 import PublicLayout from "./assets/layouts/public";
 import AdminLayout from "./assets/layouts/admin";
@@ -21,6 +26,8 @@ import ShowBook from "./assets/pages/public/books/show";
 // halaman auth
 import Login from "./assets/pages/auth/login";
 import Register from "./assets/pages/auth/register";
+import Forbidden from "./assets/pages/forbidden";
+import Profile from "./assets/pages/user/profile";
 
 // halaman admin
 import Dashboard from "./assets/pages/admin/index";
@@ -53,38 +60,63 @@ const router = createBrowserRouter([
   {
     element: <Root />,
     children: [
+      // 1. Terbuka untuk semua orang (tamu, customer, admin)
       {
         element: <PublicLayout />,
         children: [
           { path: "/", element: <Home /> },
           { path: "books", element: <Books /> },
           { path: "books/:id", element: <ShowBook /> },
+
+          // 2. Perlu login, role apa pun
+          {
+            element: <RequireRole />,
+            children: [{ path: "profile", element: <Profile /> }],
+          },
         ],
       },
-      { path: "login", element: <Login /> },
-      { path: "register", element: <Register /> },
+
+      // 3. Khusus tamu: kalau sudah login, dilempar balik ke beranda
       {
-        path: "admin",
-        element: <AdminLayout />,
+        element: <GuestOnly />,
         children: [
-          { index: true, element: <Dashboard /> },
-          { path: "books", element: <AdminBooks /> },
-          { path: "books/create", element: <BookCreate /> },
-          { path: "transactions", element: <AdminTransactions /> },
-          { path: "genres", element: <AdminGenres /> },
-          { path: "genres/create", element: <GenreCreate /> },
-          { path: "genres/:id/edit", element: <GenreEdit /> },
-          { path: "authors", element: <AdminAuthors /> },
-          { path: "authors/create", element: <AuthorCreate /> },
-          { path: "authors/:id/edit", element: <AuthorEdit /> },
+          { path: "login", element: <Login /> },
+          { path: "register", element: <Register /> },
         ],
       },
+
+      // 4. Khusus admin
+      {
+        element: <RequireRole roles={["admin"]} />,
+        children: [
+          {
+            path: "admin",
+            element: <AdminLayout />,
+            children: [
+              { index: true, element: <Dashboard /> },
+              { path: "books", element: <AdminBooks /> },
+              { path: "books/create", element: <BookCreate /> },
+              { path: "transactions", element: <AdminTransactions /> },
+              { path: "genres", element: <AdminGenres /> },
+              { path: "genres/create", element: <GenreCreate /> },
+              { path: "genres/:id/edit", element: <GenreEdit /> },
+              { path: "authors", element: <AdminAuthors /> },
+              { path: "authors/create", element: <AuthorCreate /> },
+              { path: "authors/:id/edit", element: <AuthorEdit /> },
+            ],
+          },
+        ],
+      },
+
+      { path: "forbidden", element: <Forbidden /> },
     ],
   },
 ]);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </StrictMode>
 );

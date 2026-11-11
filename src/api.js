@@ -1,6 +1,7 @@
 // Alamat backend Laravel. Bisa diganti lewat file .env (VITE_API_URL=...) tanpa mengubah kode.
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/api";
 const TOKEN_KEY = "booksales_token";
+export const UNAUTHORIZED_EVENT = "booksales:unauthorized";
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const saveToken = (token) => localStorage.setItem(TOKEN_KEY, token);
@@ -44,6 +45,8 @@ export async function request(path, { method = "GET", body } = {}) {
   const json = await res.json().catch(() => ({}));
 
   if (!res.ok) {
+    // Token ditolak server (kedaluwarsa / dicabut): beri tahu AuthProvider agar logout.
+    if (res.status === 401 && token) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
     throw new ApiError(json.message ?? "Terjadi kesalahan.", res.status, json.errors);
   }
 

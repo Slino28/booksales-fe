@@ -1,6 +1,15 @@
-import { Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminLayout() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    signOut();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <>
       <div className="antialiased bg-gray-50 dark:bg-gray-900">
@@ -99,10 +108,10 @@ export default function AdminLayout() {
               >
                 <div className="py-3 px-4">
                   <span className="block text-sm font-semibold text-gray-900 dark:text-white">
-                    Neil Sims
+                    {user?.name}
                   </span>
                   <span className="block text-sm text-gray-900 truncate dark:text-white">
-                    name@flowbite.com
+                    {user?.email}
                   </span>
                 </div>
                 <ul
@@ -110,12 +119,21 @@ export default function AdminLayout() {
                   aria-labelledby="dropdown"
                 >
                   <li>
-                    <a
-                      href="#"
+                    <Link
+                      to="/"
                       className="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
                     >
+                      Lihat situs
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="block w-full py-2 px-4 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+                    >
                       Sign out
-                    </a>
+                    </button>
                   </li>
                 </ul>
               </div>

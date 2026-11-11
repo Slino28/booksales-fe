@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { request, saveToken } from "../../../api";
+import { Link } from "react-router-dom";
+import { request } from "../../../api";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Login() {
-  const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,9 +20,9 @@ export default function Login() {
 
     try {
       const res = await request("/login", { method: "POST", body: form });
-      saveToken(res.data.token);
-      // admin ke dashboard admin, customer ke beranda
-      navigate(res.data.user.role === "admin" ? "/admin" : "/");
+      const { token, user } = res.data;
+      // Setelah signIn, <GuestOnly> otomatis memindahkan pengguna ke halaman tujuan.
+      signIn(token, user);
     } catch (err) {
       setError(err.message);
     } finally {
