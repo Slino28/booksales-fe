@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { request } from "../../../api";
 import { useAuth } from "../../context/AuthContext";
+import AuthShowcase from "../../components/auth/AuthShowcase";
+import TextField from "../../components/form/TextField";
+import PasswordField from "../../components/form/PasswordField";
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -9,9 +12,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,83 +26,58 @@ export default function Login() {
       signIn(token, user);
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <section className="bg-gray-50 dark:bg-gray-900">
-        <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-          <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-            <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-              <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-                Sign in to your account
-              </h1>
-              <form className="space-y-4 md:space-y-6" onSubmit={handleSubmit}>
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Your email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    id="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-600 focus:border-indigo-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    placeholder="name@company.com"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                  >
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    id="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-600 focus:border-indigo-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    required
-                  />
-                </div>
-                {error && (
-                  <p className="p-3 text-sm text-red-800 bg-red-50 rounded-lg dark:bg-gray-700 dark:text-red-400">
-                    {error}
-                  </p>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-indigo-600 dark:hover:bg-indigo-700 dark:focus:ring-indigo-800"
-                >
-                  {loading ? "Memproses..." : "Masuk"}
-                </button>
-                <p className="text-sm font-light text-gray-500 dark:text-gray-400">
-                  Don’t have an account yet?{" "}
-                  <Link
-                    to="/register"
-                    className="font-medium text-indigo-600 hover:underline dark:text-indigo-500"
-                  >
-                    Sign up
-                  </Link>
-                </p>
-              </form>
-            </div>
-          </div>
+    <div className="grid min-h-screen font-isi lg:grid-cols-[5fr_6fr]">
+      <AuthShowcase />
+
+      <main className="flex items-center bg-white px-6 py-10 sm:px-12">
+        <div className="mx-auto w-full max-w-[26rem]">
+          <Link to="/" className="mb-8 block font-judul text-xl font-bold text-tinta lg:hidden">
+            BookSales
+          </Link>
+
+          <h1 className="font-judul text-3xl font-bold tracking-tight text-slate-900">Selamat datang kembali</h1>
+          <p className="mt-2 text-[15px] text-slate-600">
+            Belum punya akun?{" "}
+            <Link to="/register" className="font-semibold text-kobalt hover:underline">
+              Daftar
+            </Link>
+          </p>
+
+          {error && (
+            <p role="alert" className="mt-6 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+              {error}
+            </p>
+          )}
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <TextField
+              label="Email"
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="nama@email.com"
+              autoComplete="email"
+            />
+            <PasswordField
+              label="Password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Password kamu"
+              autoComplete="current-password"
+            />
+            <button type="submit" disabled={loading} className="btn btn-primary btn-lg w-full">
+              {loading ? "Memproses..." : "Masuk"}
+            </button>
+          </form>
         </div>
-      </section>
-    </>
+      </main>
+    </div>
   );
 }

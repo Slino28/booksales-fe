@@ -1,5 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // tampilan terang saja: dark mode hanya aktif kalau class "dark" dipasang manual
+  darkMode: "class",
   content: [
     "./index.html",
     "./src/**/*.{js,jsx}",
@@ -7,7 +9,7 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // font khusus halaman daftar; font halaman lain tidak berubah
+      // judul memakai Literata (serif), isi memakai Instrument Sans
       fontFamily: {
         judul: ["Literata", "ui-serif", "Georgia", "serif"],
         isi: ['"Instrument Sans"', "ui-sans-serif", "system-ui", "sans-serif"],
@@ -16,6 +18,11 @@ module.exports = {
         tinta: "#14234B",
         malam: "#0B1226",
         kobalt: { DEFAULT: "#2547F5", gelap: "#1B37C4" },
+        // warna aksen sampul buku & penanda status
+        kuning: "#F2B632",
+        jingga: "#E4572E",
+        hijau: "#1F6F54",
+        krem: "#F7F4EC",
       },
       keyframes: {
         // punggung buku naik ke rak

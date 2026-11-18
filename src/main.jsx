@@ -11,6 +11,7 @@ import "./index.css";
 
 // autentikasi & hak akses
 import { AuthProvider } from "./assets/context/AuthContext";
+import { CartProvider } from "./assets/context/CartContext";
 import RequireRole from "./assets/components/auth/RequireRole";
 import GuestOnly from "./assets/components/auth/GuestOnly";
 
@@ -26,13 +27,21 @@ import ShowBook from "./assets/pages/public/books/show";
 // halaman auth
 import Login from "./assets/pages/auth/login";
 import Register from "./assets/pages/auth/register";
+import About from "./assets/pages/public/about";
+import Contact from "./assets/pages/public/contact";
+import Cart from "./assets/pages/public/cart";
 import Forbidden from "./assets/pages/forbidden";
+import Checkout from "./assets/pages/user/checkout";
+import Orders from "./assets/pages/user/orders";
 import Profile from "./assets/pages/user/profile";
 
 // halaman admin
 import Dashboard from "./assets/pages/admin/index";
 import AdminBooks from "./assets/pages/admin/books/index";
 import BookCreate from "./assets/pages/admin/books/create";
+import BookEdit from "./assets/pages/admin/books/edit";
+import AdminUsers from "./assets/pages/admin/users/index";
+import AdminMessages from "./assets/pages/admin/messages/index";
 import AdminTransactions from "./assets/pages/admin/transactions/index";
 import AdminGenres from "./assets/pages/admin/genres/index";
 import GenreCreate from "./assets/pages/admin/genres/create";
@@ -67,11 +76,23 @@ const router = createBrowserRouter([
           { path: "/", element: <Home /> },
           { path: "books", element: <Books /> },
           { path: "books/:id", element: <ShowBook /> },
+          { path: "about", element: <About /> },
+          { path: "contact", element: <Contact /> },
+          { path: "cart", element: <Cart /> },
 
           // 2. Perlu login, role apa pun
           {
             element: <RequireRole />,
             children: [{ path: "profile", element: <Profile /> }],
+          },
+
+          // 2b. Khusus customer: checkout dan riwayat pesanan
+          {
+            element: <RequireRole roles={["customer"]} />,
+            children: [
+              { path: "checkout", element: <Checkout /> },
+              { path: "orders", element: <Orders /> },
+            ],
           },
         ],
       },
@@ -96,6 +117,9 @@ const router = createBrowserRouter([
               { index: true, element: <Dashboard /> },
               { path: "books", element: <AdminBooks /> },
               { path: "books/create", element: <BookCreate /> },
+              { path: "books/:id/edit", element: <BookEdit /> },
+              { path: "users", element: <AdminUsers /> },
+              { path: "messages", element: <AdminMessages /> },
               { path: "transactions", element: <AdminTransactions /> },
               { path: "genres", element: <AdminGenres /> },
               { path: "genres/create", element: <GenreCreate /> },
@@ -116,7 +140,9 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
+      <CartProvider>
+        <RouterProvider router={router} />
+      </CartProvider>
     </AuthProvider>
   </StrictMode>
 );

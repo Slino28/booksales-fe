@@ -1,3 +1,51 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-krem font-isi text-slate-800 antialiased;
+  }
+}
+
+/* Gaya yang dipakai berulang di banyak halaman, supaya JSX tetap ringkas. */
+@layer components {
+  .btn {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-4 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-kobalt text-white hover:bg-kobalt-gelap focus-visible:ring-kobalt/30;
+  }
+  .btn-dark {
+    @apply bg-tinta text-white hover:bg-malam focus-visible:ring-tinta/30;
+  }
+  .btn-outline {
+    @apply border border-slate-300 bg-white text-slate-800 hover:bg-slate-50 focus-visible:ring-slate-300/50;
+  }
+  .btn-danger {
+    @apply border border-red-200 bg-white text-red-700 hover:bg-red-50 focus-visible:ring-red-200;
+  }
+  .btn-lg {
+    @apply h-12 px-6 text-[15px];
+  }
+  .btn-sm {
+    @apply h-8 px-3 text-xs;
+  }
+
+  .field {
+    @apply block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-[15px] text-slate-900 placeholder:text-slate-400 focus:border-kobalt focus:outline-none focus:ring-4 focus:ring-kobalt/20;
+  }
+  .field-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500/20;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-semibold text-slate-800;
+  }
+
+  .card {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+  }
+}

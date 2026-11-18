@@ -1,9 +1,53 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import Icon from "./ui/Icon";
+
+const links = [
+  { to: "/", label: "Beranda", end: true },
+  { to: "/books", label: "Buku" },
+  { to: "/about", label: "Tentang" },
+  { to: "/contact", label: "Kontak" },
+];
+
+const linkClass = ({ isActive }) =>
+  `rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+    isActive ? "bg-kobalt/10 text-kobalt" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+  }`;
 
 export default function Navbar() {
   const { user, isAdmin, signOut } = useAuth();
+  const { count } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const [keyword, setKeyword] = useState("");
+  const userRef = useRef(null);
+
+  // tutup menu setiap pindah halaman
+  useEffect(() => {
+    setMenuOpen(false);
+    setUserOpen(false);
+  }, [location.pathname]);
+
+  // klik di luar menu pengguna menutupnya
+  useEffect(() => {
+    const close = (e) => {
+      if (userRef.current && !userRef.current.contains(e.target)) setUserOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const q = keyword.trim();
+    navigate(q ? `/books?search=${encodeURIComponent(q)}` : "/books");
+    setMenuOpen(false);
+  };
 
   const handleLogout = () => {
     signOut();
@@ -11,138 +55,163 @@ export default function Navbar() {
   };
 
   return (
-    <>
-      <header>
-        <nav className="bg-white border-gray-200 px-4 lg:px-6 py-2.5 dark:bg-gray-800">
-          <div className="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
-            <a href="#" className="flex items-center">
-              <img
-                src="https://flowbite.com/docs/images/logo.svg"
-                className="mr-3 h-6 sm:h-9"
-                alt="Flowbite Logo"
-              />
-              <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">
-                Flowbite
-              </span>
-            </a>
-            <div className="flex items-center lg:order-2">
-              {user ? (
-                <>
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <div className="container-page flex h-16 items-center gap-4">
+        <Link to="/" className="flex items-center gap-2 font-judul text-xl font-bold text-tinta">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-kobalt text-white">
+            <Icon name="book" className="h-4 w-4" />
+          </span>
+          BookSales
+        </Link>
+
+        <nav className="ml-4 hidden items-center gap-1 lg:flex" aria-label="Menu utama">
+          {links.map((l) => (
+            <NavLink key={l.to} to={l.to} end={l.end} className={linkClass}>
+              {l.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <form onSubmit={handleSearch} role="search" className="ml-auto hidden max-w-xs flex-1 md:block">
+          <label htmlFor="nav-search" className="sr-only">
+            Cari buku
+          </label>
+          <div className="relative">
+            <Icon
+              name="search"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              id="nav-search"
+              type="search"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="Cari judul, penulis, genre"
+              className="field h-10 rounded-full bg-slate-50 py-0 pl-9 text-sm"
+            />
+          </div>
+        </form>
+
+        <div className="ml-auto flex items-center gap-2 md:ml-0">
+          {!isAdmin && (
+            <Link
+              to="/cart"
+              aria-label={`Keranjang, ${count} barang`}
+              className="relative flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100"
+            >
+              <Icon name="cart" className="h-5 w-5" />
+              {count > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-jingga px-1 text-[11px] font-bold text-white">
+                  {count}
+                </span>
+              )}
+            </Link>
+          )}
+
+          {user ? (
+            <div ref={userRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setUserOpen((o) => !o)}
+                aria-expanded={userOpen}
+                aria-haspopup="menu"
+                className="flex h-10 items-center gap-2 rounded-full border border-slate-200 bg-white pl-1 pr-3 hover:bg-slate-50"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-tinta text-sm font-bold text-white">
+                  {user.name?.trim()?.[0]?.toUpperCase() ?? "?"}
+                </span>
+                <span className="hidden max-w-[7rem] truncate text-sm font-semibold sm:block">
+                  {user.name}
+                </span>
+              </button>
+
+              {userOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+                >
+                  <div className="border-b border-slate-100 px-4 py-3">
+                    <p className="truncate text-sm font-semibold">{user.name}</p>
+                    <p className="truncate text-xs text-slate-500">{user.email}</p>
+                  </div>
                   {isAdmin && (
-                    <Link
-                      to="/admin"
-                      className="text-gray-800 dark:text-white hover:bg-gray-50 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700"
-                    >
-                      Dashboard Admin
+                    <Link role="menuitem" to="/admin" className="block px-4 py-2 text-sm hover:bg-slate-50">
+                      Dashboard admin
                     </Link>
                   )}
-                  <Link
-                    to="/profile"
-                    className="text-gray-800 dark:text-white hover:bg-gray-50 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700"
-                  >
-                    {user.name}
+                  <Link role="menuitem" to="/profile" className="block px-4 py-2 text-sm hover:bg-slate-50">
+                    Profil
                   </Link>
+                  {!isAdmin && (
+                    <Link role="menuitem" to="/orders" className="block px-4 py-2 text-sm hover:bg-slate-50">
+                      Pesanan saya
+                    </Link>
+                  )}
                   <button
                     type="button"
+                    role="menuitem"
                     onClick={handleLogout}
-                    className="text-white bg-indigo-700 hover:bg-indigo-800 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:bg-indigo-600 dark:hover:bg-indigo-700 focus:outline-none dark:focus:ring-indigo-800"
+                    className="block w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-red-50"
                   >
                     Keluar
                   </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800"
-                  >
-                    Masuk
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="text-white bg-indigo-700 hover:bg-indigo-800 focus:ring-4 focus:ring-indigo-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:bg-indigo-600 dark:hover:bg-indigo-700 focus:outline-none dark:focus:ring-indigo-800"
-                  >
-                    Bergabung
-                  </Link>
-                </>
+                </div>
               )}
-              <button
-                data-collapse-toggle="mobile-menu-2"
-                type="button"
-                className="inline-flex items-center p-2 ml-1 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-                aria-controls="mobile-menu-2"
-                aria-expanded="false"
-              >
-                <span className="sr-only">Open main menu</span>
-                <svg
-                  className="w-6 h-6"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-                <svg
-                  className="hidden w-6 h-6"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-              </button>
             </div>
-            <div
-              className="hidden justify-between items-center w-full lg:flex lg:w-auto lg:order-1"
-              id="mobile-menu-2"
-            >
-              <ul className="flex flex-col mt-4 font-medium lg:flex-row lg:space-x-8 lg:mt-0">
-                <li>
-                  <a
-                    href="/"
-                    className="block py-2 pr-4 pl-3 text-white rounded bg-indigo-700 lg:bg-transparent lg:text-indigo-700 lg:p-0 dark:text-white"
-                    aria-current="page"
-                  >
-                    Home
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/books"
-                    className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-indigo-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700"
-                  >
-                    Buku Terlaris
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-indigo-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700"
-                  >
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-indigo-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700"
-                  >
-                    Layanan
-                  </a>
-                </li>
-              </ul>
+          ) : (
+            <div className="hidden items-center gap-2 sm:flex">
+              <Link to="/login" className="btn btn-outline">
+                Masuk
+              </Link>
+              <Link to="/register" className="btn btn-primary">
+                Daftar
+              </Link>
             </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-expanded={menuOpen}
+            aria-label="Buka menu"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 lg:hidden"
+          >
+            <Icon name={menuOpen ? "close" : "menu"} />
+          </button>
+        </div>
+      </div>
+
+      {menuOpen && (
+        <div className="border-t border-slate-200 bg-white lg:hidden">
+          <div className="container-page space-y-1 py-3">
+            <form onSubmit={handleSearch} role="search" className="mb-2 md:hidden">
+              <input
+                type="search"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="Cari buku..."
+                aria-label="Cari buku"
+                className="field"
+              />
+            </form>
+            {links.map((l) => (
+              <NavLink key={l.to} to={l.to} end={l.end} className={(s) => `block ${linkClass(s)}`}>
+                {l.label}
+              </NavLink>
+            ))}
+            {!user && (
+              <div className="flex gap-2 pt-2 sm:hidden">
+                <Link to="/login" className="btn btn-outline flex-1">
+                  Masuk
+                </Link>
+                <Link to="/register" className="btn btn-primary flex-1">
+                  Daftar
+                </Link>
+              </div>
+            )}
           </div>
-        </nav>
-      </header>
-    </>
+        </div>
+      )}
+    </header>
   );
 }
